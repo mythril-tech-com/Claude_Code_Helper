@@ -32,10 +32,11 @@ Everything you have added recently also stays on the clipboard as a **basket**. 
 
 ## How it works
 
-Claude Code has no public API for adding text to its chat, so this extension uses two of Claude Code's internal commands. They may change in a future Claude Code update. If one is missing or fails, the references are still on your clipboard.
+Claude Code has no public API for adding text to its chat, so this extension uses three of Claude Code's internal commands. They may change in a future Claude Code update. If one is missing or fails, the references are still on your clipboard.
 
 - **New chat:** `claude-vscode.editor.open` accepts a starting prompt. Claude Code types it into the new chat once the chat has loaded.
-- **Open chat:** `claude-vscode.focus` focuses Claude's input. The extension waits until the input has focus, then runs VS Code's built-in paste command, which goes to the focused chat. When Claude's chat is visible next to your code, VS Code signals exactly when it takes focus. When the chat is behind another tab, the extension waits a short, fixed time after the tab comes forward.
+- **Selections and the active file, open chat:** `claude-vscode.insertAtMention` is Claude Code's own **Insert @-Mention Reference** (`Alt+K`). It only mentions the active editor's selection, so the extension selects each range in turn, runs the command, then restores your selection. Claude Code hands the mention straight to its chat, even one behind another tab. If several Claude chats are visible, each one gets it.
+- **Other files and folders, open chat:** `claude-vscode.focus` focuses Claude's input. The extension waits until the input has focus, then runs VS Code's built-in paste command, which goes to the focused chat. When Claude's chat is visible next to your code, VS Code signals exactly when it takes focus. When the chat is behind another tab, the extension waits a short, fixed time after the tab comes forward.
 
 `claude-vscode.focus` also inserts the active editor's selection into the chat by itself. To avoid duplicates, the extension briefly collapses that selection while the command runs, then restores it.
 
@@ -59,6 +60,6 @@ npm run package
 2. Click the **...** menu at the top of the view.
 3. Choose **Install from VSIX...** and pick the `.vsix` file.
 
-Or from a terminal: `code --install-extension claude-add-to-chat-0.0.3.vsix`
+Or from a terminal: `code --install-extension claude-add-to-chat-0.0.4.vsix`
 
 Installing a newer `.vsix` replaces the old version. Reload the window afterwards.

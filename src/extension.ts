@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 const FOCUS_CLAUDE = 'claude-vscode.focus';
 /** Takes (sessionId, prompt) and opens a new chat with the prompt in its input, without sending it. */
 const OPEN_CLAUDE = 'claude-vscode.editor.open';
+/** Claude Code's own Alt+K: mentions the active editor's selection, or its whole file when nothing is selected. */
+const MENTION_CLAUDE = 'claude-vscode.insertAtMention';
 /** View type suffix of Claude Code's chat when it opens in an editor tab. */
 const CLAUDE_PANEL = 'claudeVSCodePanel';
 
@@ -11,6 +13,15 @@ const CLAUDE_PANEL = 'claudeVSCodePanel';
 const SETTLE_MS = 600;
 /** Time the webview needs to read the clipboard after the paste command. */
 const PASTE_READ_MS = 200;
+
+/**
+ * A reference, plus the active editor selection that makes Claude Code's mention command produce it.
+ * Folders and files that aren't the active editor have no such selection and can only be pasted.
+ */
+interface Ref {
+  text: string;
+  selection?: vscode.Selection;
+}
 
 let basket: string[] = [];
 let statusItem: vscode.StatusBarItem;
@@ -51,14 +62,16 @@ async function addUris(clicked: vscode.Uri | undefined, selected: unknown, newCh
     uris = uri ? [uri] : [];
   }
 
-  const refs: string[] = [];
+  const refs: Ref[] = [];
   let skipped = 0;
   for (const uri of uris) {
     const path = workspacePath(uri);
     if (path === undefined) {
       skipped++;
+    } else if (await isDirectory(uri)) {
+      refs.push({ text: `@${path}/` });
     } else {
-      refs.push(`@${path}${(await isDirectory(uri)) ? '/' : ''}`);
+      refs.push({ text: `@${path}`, selection: wholeFileSelection(uri, path) });
     }
   }
   await add(refs, skipped, newChat);
@@ -76,7 +89,10 @@ async function addSelection(newChat: boolean) {
   const refs = [...editor.selections]
     .filter(sel => !sel.isEmpty)
     .sort((a, b) => a.start.compareTo(b.start))
-    .map(sel => lineRef(path, sel));
+    .map(sel => ({
+      text: lineRef(path, sel),
+      selection: mentionable(path) ? mentionSelection(editor.document, sel) : undefined,
+    }));
   await add(refs, 0, newChat);
 }
 
@@ -104,7 +120,31 @@ function lineRef(path: string, sel: vscode.Selection): string {
   return start === end ? `@${path}#${start}` : `@${path}#${start}-${end}`;
 }
 
-async function add(refs: string[], skipped: number, newChat: boolean) {
+/** Claude Code refuses to mention these paths, because it would read them as a different mention. */
+function mentionable(path: string): boolean {
+  return !/[#"]/.test(path);
+}
+
+/** An empty selection makes Claude Code mention the whole file, but only for the active editor. */
+function wholeFileSelection(uri: vscode.Uri, path: string): vscode.Selection | undefined {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.uri.toString() !== uri.toString() || !mentionable(path)) {
+    return undefined;
+  }
+  return new vscode.Selection(editor.selection.active, editor.selection.active);
+}
+
+/** The lines of lineRef as a selection for Claude Code, which counts a selection ending at column 0 as including that line. */
+function mentionSelection(document: vscode.TextDocument, sel: vscode.Selection): vscode.Selection | undefined {
+  if (!(sel.end.character === 0 && sel.end.line > sel.start.line)) {
+    return sel;
+  }
+  const end = document.lineAt(sel.end.line - 1).range.end;
+  // When only a line break is selected, no non-empty selection covers just that line.
+  return end.isAfter(sel.start) ? new vscode.Selection(sel.start, end) : undefined;
+}
+
+async function add(refs: Ref[], skipped: number, newChat: boolean) {
   if (skipped) {
     void vscode.window.showWarningMessage(
       `Skipped ${skipped} item${skipped === 1 ? '' : 's'}: only files in this workspace can be added to Claude.`
@@ -117,10 +157,10 @@ async function add(refs: string[], skipped: number, newChat: boolean) {
   if (newChat) {
     basket = [];
   }
-  const added: string[] = [];
+  const added: Ref[] = [];
   for (const ref of refs) {
-    if (!basket.includes(ref)) {
-      basket.push(ref);
+    if (!basket.includes(ref.text)) {
+      basket.push(ref.text);
       added.push(ref);
     }
   }
@@ -128,7 +168,7 @@ async function add(refs: string[], skipped: number, newChat: boolean) {
   scheduleAutoClear();
 
   if (added.length) {
-    await sendToClaude(added.join(' ') + ' ', newChat);
+    await sendToClaude(added, newChat);
   } else {
     await focusClaude();
   }
@@ -136,8 +176,9 @@ async function add(refs: string[], skipped: number, newChat: boolean) {
   await vscode.env.clipboard.writeText(basket.join(' ') + ' ');
 }
 
-/** Puts `text` into Claude Code's chat input, starting a new chat when asked to or when no chat is open. */
-async function sendToClaude(text: string, newChat: boolean) {
+/** Puts `refs` into Claude Code's chat input, starting a new chat when asked to or when no chat is open. */
+async function sendToClaude(refs: Ref[], newChat: boolean) {
+  const text = refs.map(ref => ref.text).join(' ') + ' ';
   if (newChat) {
     await openClaudeChat(text);
     return;
@@ -148,6 +189,9 @@ async function sendToClaude(text: string, newChat: boolean) {
   }
   const inPanel = vscode.workspace.getConfiguration('claudeCode').get('preferredLocation') !== 'sidebar';
   if (inPanel && !claudeTabs().length && (await openClaudeChat(text))) {
+    return;
+  }
+  if (await mentionInClaude(refs)) {
     return;
   }
   const layout = claudeLayout(inPanel);
@@ -175,6 +219,33 @@ async function openClaudeChat(text: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Inserts the references with Claude Code's own mention command, which hands each one to the chat, revealing it if
+ * hidden, without the clipboard or any waiting for focus. The command only reads the active editor's selection, so
+ * this works only when every reference has one. Claude Code keeps just one mention for a chat that isn't open yet,
+ * which is why a missing chat tab is opened before this runs.
+ */
+async function mentionInClaude(refs: Ref[]): Promise<boolean> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !refs.every(ref => ref.selection) || !(await hasCommand(MENTION_CLAUDE))) {
+    return false;
+  }
+  const saved = editor.selections;
+  let sent = 0;
+  try {
+    for (const ref of refs) {
+      editor.selection = ref.selection!;
+      await vscode.commands.executeCommand(MENTION_CLAUDE);
+      sent++;
+    }
+  } catch {
+    // Claude Code changed. If it failed partway, the rest are still on the clipboard.
+  } finally {
+    editor.selections = saved;
+  }
+  return sent > 0;
 }
 
 /**
