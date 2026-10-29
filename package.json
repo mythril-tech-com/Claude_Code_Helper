@@ -1,0 +1,119 @@
+{
+  "name": "claude-add-to-chat",
+  "displayName": "Claude Add to Chat",
+  "description": "Add file, folder and line references to Claude Code's chat, like Cursor's \"Add to chat\".",
+  "version": "0.0.3",
+  "publisher": "mythriltech",
+  "engines": {
+    "vscode": "^1.98.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeAddToChat.add",
+        "title": "Add to Claude"
+      },
+      {
+        "command": "claudeAddToChat.addToNewChat",
+        "title": "Add to New Claude Chat"
+      },
+      {
+        "command": "claudeAddToChat.addSelection",
+        "title": "Add Selection to Claude"
+      },
+      {
+        "command": "claudeAddToChat.addSelectionToNewChat",
+        "title": "Add Selection to New Claude Chat"
+      },
+      {
+        "command": "claudeAddToChat.clear",
+        "title": "Clear Claude References"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "claudeAddToChat.add",
+          "group": "1_claude@1"
+        },
+        {
+          "command": "claudeAddToChat.addToNewChat",
+          "group": "1_claude@2"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "claudeAddToChat.add",
+          "group": "1_claude@1"
+        },
+        {
+          "command": "claudeAddToChat.addToNewChat",
+          "group": "1_claude@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "claudeAddToChat.addSelection",
+          "when": "editorHasSelection",
+          "group": "1_claude@1"
+        },
+        {
+          "command": "claudeAddToChat.addSelectionToNewChat",
+          "when": "editorHasSelection",
+          "group": "1_claude@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "claudeAddToChat.addSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "claudeAddToChat.addSelectionToNewChat",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "claudeAddToChat.addSelection",
+        "key": "ctrl+l",
+        "mac": "cmd+l",
+        "when": "editorTextFocus && editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Add to Chat",
+      "properties": {
+        "claudeAddToChat.autoClearSeconds": {
+          "type": "number",
+          "default": 120,
+          "minimum": 0,
+          "maximum": 86400,
+          "markdownDescription": "Clear the reference basket after this many seconds without a new add. `0` means never."
+        },
+        "claudeAddToChat.autoPaste": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "**Add to Claude** puts new references straight into the open Claude Code chat. Turn this off to paste them yourself with `Ctrl+V`. **Add to New Claude Chat** always fills in the new chat."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "1.98.0",
+    "typescript": "^5.8.0"
+  }
+}
