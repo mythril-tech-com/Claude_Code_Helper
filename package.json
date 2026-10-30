@@ -1,14 +1,38 @@
 {
-  "name": "claude-add-to-chat",
-  "displayName": "Claude Add to Chat",
-  "description": "Add file, folder and line references to Claude Code's chat, like Cursor's \"Add to chat\".",
-  "version": "0.0.8",
+  "name": "claude-code-add-to-chat",
+  "displayName": "Claude Code - Add to Chat",
+  "description": "Right-click files, folders or selected lines to add @-references to Claude Code's chat. Ctrl+L like Cursor.",
+  "version": "0.1.0",
   "publisher": "mythriltech",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mythril-tech-com/Claude_Code_Helper.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mythril-tech-com/Claude_Code_Helper/issues"
+  },
+  "homepage": "https://github.com/mythril-tech-com/Claude_Code_Helper#readme",
   "engines": {
     "vscode": "^1.98.0"
   },
   "categories": [
-    "Other"
+    "AI",
+    "Chat"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "anthropic",
+    "add to chat",
+    "context",
+    "mention",
+    "reference",
+    "at mention",
+    "cursor",
+    "ai"
   ],
   "main": "./out/extension.js",
   "activationEvents": [
@@ -274,7 +298,8 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "npx @vscode/vsce package --allow-missing-repository --skip-license"
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

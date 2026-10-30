@@ -1,6 +1,8 @@
-# Claude Add to Chat
+# Claude Code - Add to Chat
 
 Add file, folder and line references to the Claude Code chat, similar to Cursor's "Add to chat".
+
+Requires the [Claude Code](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) extension.
 
 ## Usage
 
@@ -78,14 +80,22 @@ npm run compile
 npm run package
 ```
 
-`npm run package` runs `npx @vscode/vsce package` and creates `claude-add-to-chat-<version>.vsix`.
+`npm run package` runs `npx @vscode/vsce package` and creates `claude-code-add-to-chat-<version>.vsix`.
 
 ## Install
+
+Open the Extensions view (`Ctrl+Shift+X`), search for **Claude Code - Add to Chat** and click **Install**.
+
+Or from a terminal: `code --install-extension mythriltech.claude-code-add-to-chat`
+
+To install a `.vsix` you built yourself:
 
 1. Open the Extensions view (`Ctrl+Shift+X`).
 2. Click the **...** menu at the top of the view.
 3. Choose **Install from VSIX...** and pick the `.vsix` file.
 
-Or from a terminal: `code --install-extension claude-add-to-chat-0.0.8.vsix`
+Or from a terminal: `code --install-extension claude-code-add-to-chat-0.1.0.vsix`
 
 Installing a newer `.vsix` replaces the old version. Reload the window afterwards.
+
+If you installed a version before 0.1.0, uninstall **Claude Add to Chat** first. It was renamed, so VS Code treats the two as separate extensions and would run both.
