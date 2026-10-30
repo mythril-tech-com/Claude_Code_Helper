@@ -2,7 +2,7 @@
   "name": "claude-add-to-chat",
   "displayName": "Claude Add to Chat",
   "description": "Add file, folder and line references to Claude Code's chat, like Cursor's \"Add to chat\".",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "mythriltech",
   "engines": {
     "vscode": "^1.98.0"
@@ -34,19 +34,35 @@
       },
       {
         "command": "claudeAddToChat.addToSidebar",
-        "title": "Add to Claude (Side Bar)"
+        "title": "Add to Claude"
       },
       {
         "command": "claudeAddToChat.addToNewSidebarChat",
-        "title": "Add to New Claude Chat (Side Bar)"
+        "title": "Add to New Claude Chat"
       },
       {
         "command": "claudeAddToChat.addSelectionToSidebar",
-        "title": "Add Selection to Claude (Side Bar)"
+        "title": "Add Selection to Claude"
       },
       {
         "command": "claudeAddToChat.addSelectionToNewSidebarChat",
-        "title": "Add Selection to New Claude Chat (Side Bar)"
+        "title": "Add Selection to New Claude Chat"
+      },
+      {
+        "command": "claudeAddToChat.addToTab",
+        "title": "Add to Claude (Tab)"
+      },
+      {
+        "command": "claudeAddToChat.addToNewTabChat",
+        "title": "Add to New Claude Chat (Tab)"
+      },
+      {
+        "command": "claudeAddToChat.addSelectionToTab",
+        "title": "Add Selection to Claude (Tab)"
+      },
+      {
+        "command": "claudeAddToChat.addSelectionToNewTabChat",
+        "title": "Add Selection to New Claude Chat (Tab)"
       },
       {
         "command": "claudeAddToChat.clear",
@@ -57,73 +73,115 @@
       "explorer/context": [
         {
           "command": "claudeAddToChat.add",
+          "when": "!claudeAddToChat.sidebar",
           "group": "1_claude@1"
         },
         {
           "command": "claudeAddToChat.addToNewChat",
+          "when": "!claudeAddToChat.sidebar",
           "group": "1_claude@2"
         },
         {
           "command": "claudeAddToChat.addToSidebar",
           "when": "claudeAddToChat.sidebar",
-          "group": "1_claude@3"
+          "group": "1_claude@1"
         },
         {
           "command": "claudeAddToChat.addToNewSidebarChat",
           "when": "claudeAddToChat.sidebar",
+          "group": "1_claude@2"
+        },
+        {
+          "command": "claudeAddToChat.addToTab",
+          "when": "claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions",
+          "group": "1_claude@3"
+        },
+        {
+          "command": "claudeAddToChat.addToNewTabChat",
+          "when": "claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions",
           "group": "1_claude@4"
         }
       ],
       "editor/title/context": [
         {
           "command": "claudeAddToChat.add",
+          "when": "!claudeAddToChat.sidebar",
           "group": "1_claude@1"
         },
         {
           "command": "claudeAddToChat.addToNewChat",
+          "when": "!claudeAddToChat.sidebar",
           "group": "1_claude@2"
         },
         {
           "command": "claudeAddToChat.addToSidebar",
           "when": "claudeAddToChat.sidebar",
-          "group": "1_claude@3"
+          "group": "1_claude@1"
         },
         {
           "command": "claudeAddToChat.addToNewSidebarChat",
           "when": "claudeAddToChat.sidebar",
+          "group": "1_claude@2"
+        },
+        {
+          "command": "claudeAddToChat.addToTab",
+          "when": "claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions",
+          "group": "1_claude@3"
+        },
+        {
+          "command": "claudeAddToChat.addToNewTabChat",
+          "when": "claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions",
           "group": "1_claude@4"
         }
       ],
       "editor/context": [
         {
           "command": "claudeAddToChat.addSelection",
-          "when": "editorHasSelection",
+          "when": "editorHasSelection && !claudeAddToChat.sidebar",
           "group": "1_claude@1"
         },
         {
           "command": "claudeAddToChat.addSelectionToNewChat",
-          "when": "editorHasSelection",
+          "when": "editorHasSelection && !claudeAddToChat.sidebar",
           "group": "1_claude@2"
         },
         {
           "command": "claudeAddToChat.addSelectionToSidebar",
           "when": "editorHasSelection && claudeAddToChat.sidebar",
-          "group": "1_claude@3"
+          "group": "1_claude@1"
         },
         {
           "command": "claudeAddToChat.addSelectionToNewSidebarChat",
           "when": "editorHasSelection && claudeAddToChat.sidebar",
+          "group": "1_claude@2"
+        },
+        {
+          "command": "claudeAddToChat.addSelectionToTab",
+          "when": "editorHasSelection && claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions",
+          "group": "1_claude@3"
+        },
+        {
+          "command": "claudeAddToChat.addSelectionToNewTabChat",
+          "when": "editorHasSelection && claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions",
           "group": "1_claude@4"
         }
       ],
       "commandPalette": [
         {
+          "command": "claudeAddToChat.add",
+          "when": "!claudeAddToChat.sidebar"
+        },
+        {
+          "command": "claudeAddToChat.addToNewChat",
+          "when": "!claudeAddToChat.sidebar"
+        },
+        {
           "command": "claudeAddToChat.addSelection",
-          "when": "editorHasSelection"
+          "when": "editorHasSelection && !claudeAddToChat.sidebar"
         },
         {
           "command": "claudeAddToChat.addSelectionToNewChat",
-          "when": "editorHasSelection"
+          "when": "editorHasSelection && !claudeAddToChat.sidebar"
         },
         {
           "command": "claudeAddToChat.addToSidebar",
@@ -140,6 +198,22 @@
         {
           "command": "claudeAddToChat.addSelectionToNewSidebarChat",
           "when": "editorHasSelection && claudeAddToChat.sidebar"
+        },
+        {
+          "command": "claudeAddToChat.addToTab",
+          "when": "claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions"
+        },
+        {
+          "command": "claudeAddToChat.addToNewTabChat",
+          "when": "claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions"
+        },
+        {
+          "command": "claudeAddToChat.addSelectionToTab",
+          "when": "editorHasSelection && claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions"
+        },
+        {
+          "command": "claudeAddToChat.addSelectionToNewTabChat",
+          "when": "editorHasSelection && claudeAddToChat.sidebar && config.claudeAddToChat.showTabOptions"
         }
       ]
     },
@@ -164,7 +238,13 @@
         "command": "claudeAddToChat.addSelection",
         "key": "ctrl+l",
         "mac": "cmd+l",
-        "when": "editorTextFocus && editorHasSelection"
+        "when": "editorTextFocus && editorHasSelection && !claudeAddToChat.sidebar"
+      },
+      {
+        "command": "claudeAddToChat.addSelectionToSidebar",
+        "key": "ctrl+l",
+        "mac": "cmd+l",
+        "when": "editorTextFocus && editorHasSelection && claudeAddToChat.sidebar"
       }
     ],
     "configuration": {
@@ -180,7 +260,12 @@
         "claudeAddToChat.autoPaste": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "**Add to Claude** puts new references straight into the open Claude Code chat. Turn this off to paste them yourself with `Ctrl+V`. **Add to New Claude Chat** always fills in the new chat."
+          "markdownDescription": "**Add to Claude** puts the references straight into the open Claude Code chat. Turn this off to paste them yourself with `Ctrl+V`. **Add to New Claude Chat** always fills in the new chat."
+        },
+        "claudeAddToChat.showTabOptions": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Also show the **(Tab)** options, which add to Claude Code's chat in an editor tab instead of its Side Bar chat."
         }
       }
     }

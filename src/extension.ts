@@ -31,6 +31,12 @@ interface Ref {
   selection?: vscode.Selection;
 }
 
+/**
+ * Where references go: Claude's sidebar chat, its chat in an editor tab, or wherever Claude Code opens, which is what
+ * the commands did before the sidebar options existed.
+ */
+type Target = 'sidebar' | 'tab' | 'claude';
+
 let basket: string[] = [];
 let statusItem: vscode.StatusBarItem;
 let clearTimer: ReturnType<typeof setTimeout> | undefined;
@@ -57,25 +63,24 @@ export function activate(context: vscode.ExtensionContext) {
     void makeSidebarDefault();
   }
 
+  // The same four commands for each target: claudeAddToChat.add, .addToSidebar, .addToTab, .addToNewChat, ...
+  for (const [suffix, target] of [['', 'claude'], ['Sidebar', 'sidebar'], ['Tab', 'tab']] as const) {
+    const to = suffix && `To${suffix}`;
+    context.subscriptions.push(
+      vscode.commands.registerCommand(`claudeAddToChat.add${to}`, (clicked?: vscode.Uri, selected?: unknown) =>
+        addUris(clicked, selected, false, target)
+      ),
+      vscode.commands.registerCommand(
+        `claudeAddToChat.addToNew${suffix}Chat`,
+        (clicked?: vscode.Uri, selected?: unknown) => addUris(clicked, selected, true, target)
+      ),
+      vscode.commands.registerCommand(`claudeAddToChat.addSelection${to}`, () => addSelection(false, target)),
+      vscode.commands.registerCommand(`claudeAddToChat.addSelectionToNew${suffix}Chat`, () => addSelection(true, target))
+    );
+  }
+
   context.subscriptions.push(
     statusItem,
-    vscode.commands.registerCommand('claudeAddToChat.add', (clicked?: vscode.Uri, selected?: unknown) =>
-      addUris(clicked, selected, false)
-    ),
-    vscode.commands.registerCommand('claudeAddToChat.addToNewChat', (clicked?: vscode.Uri, selected?: unknown) =>
-      addUris(clicked, selected, true)
-    ),
-    vscode.commands.registerCommand('claudeAddToChat.addSelection', () => addSelection(false)),
-    vscode.commands.registerCommand('claudeAddToChat.addSelectionToNewChat', () => addSelection(true)),
-    vscode.commands.registerCommand('claudeAddToChat.addToSidebar', (clicked?: vscode.Uri, selected?: unknown) =>
-      addUris(clicked, selected, false, true)
-    ),
-    vscode.commands.registerCommand(
-      'claudeAddToChat.addToNewSidebarChat',
-      (clicked?: vscode.Uri, selected?: unknown) => addUris(clicked, selected, true, true)
-    ),
-    vscode.commands.registerCommand('claudeAddToChat.addSelectionToSidebar', () => addSelection(false, true)),
-    vscode.commands.registerCommand('claudeAddToChat.addSelectionToNewSidebarChat', () => addSelection(true, true)),
     vscode.commands.registerCommand('claudeAddToChat.clear', clear),
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('claudeAddToChat.autoClearSeconds') && basket.length) {
@@ -89,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {}
 
 /** The Explorer passes (clicked, allSelected), editor tabs pass (uri, context), the palette passes nothing. */
-async function addUris(clicked: vscode.Uri | undefined, selected: unknown, newChat: boolean, sidebar = false) {
+async function addUris(clicked: vscode.Uri | undefined, selected: unknown, newChat: boolean, target: Target) {
   let uris = Array.isArray(selected) ? selected.filter((u): u is vscode.Uri => u instanceof vscode.Uri) : [];
   if (!uris.length) {
     const uri = clicked instanceof vscode.Uri ? clicked : vscode.window.activeTextEditor?.document.uri;
@@ -108,17 +113,17 @@ async function addUris(clicked: vscode.Uri | undefined, selected: unknown, newCh
       refs.push({ text: `@${path}`, selection: wholeFileSelection(uri, path) });
     }
   }
-  await add(refs, skipped, newChat, sidebar);
+  await add(refs, skipped, newChat, target);
 }
 
-async function addSelection(newChat: boolean, sidebar = false) {
+async function addSelection(newChat: boolean, target: Target) {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
   const path = workspacePath(editor.document.uri);
   if (path === undefined) {
-    return add([], 1, newChat, sidebar);
+    return add([], 1, newChat, target);
   }
   const refs = [...editor.selections]
     .filter(sel => !sel.isEmpty)
@@ -127,7 +132,7 @@ async function addSelection(newChat: boolean, sidebar = false) {
       text: lineRef(path, sel),
       selection: mentionable(path) ? mentionSelection(editor.document, sel) : undefined,
     }));
-  await add(refs, 0, newChat, sidebar);
+  await add(refs, 0, newChat, target);
 }
 
 /** Workspace-relative path with forward slashes, or undefined for non-file URIs and files outside the workspace. */
@@ -178,7 +183,7 @@ function mentionSelection(document: vscode.TextDocument, sel: vscode.Selection):
   return end.isAfter(sel.start) ? new vscode.Selection(sel.start, end) : undefined;
 }
 
-async function add(refs: Ref[], skipped: number, newChat: boolean, sidebar = false) {
+async function add(refs: Ref[], skipped: number, newChat: boolean, target: Target) {
   if (skipped) {
     void vscode.window.showWarningMessage(
       `Skipped ${skipped} item${skipped === 1 ? '' : 's'}: only files in this workspace can be added to Claude.`
@@ -191,27 +196,26 @@ async function add(refs: Ref[], skipped: number, newChat: boolean, sidebar = fal
   if (newChat) {
     basket = [];
   }
-  const added: Ref[] = [];
   for (const ref of refs) {
     if (!basket.includes(ref.text)) {
       basket.push(ref.text);
-      added.push(ref);
     }
   }
   updateStatus();
   scheduleAutoClear();
 
-  if (added.length) {
-    await (sidebar ? sendToSidebar(added, newChat) : sendToClaude(added, newChat));
-  } else {
-    await (sidebar ? focusSidebarInput() : focusClaude());
-  }
+  // Every reference is sent, even one already in the basket: a chat started with Claude Code's own New Chat button
+  // doesn't have it, and the extension can't tell that chat apart from the one it added to.
+  await (target === 'sidebar' ? sendToSidebar(refs, newChat) : sendToClaude(refs, newChat, target === 'tab'));
   // The whole basket stays on the clipboard as a fallback, with a trailing space so you can type right after pasting.
   await vscode.env.clipboard.writeText(basket.join(' ') + ' ');
 }
 
-/** Puts `refs` into Claude Code's chat input, starting a new chat when asked to or when no chat is open. */
-async function sendToClaude(refs: Ref[], newChat: boolean) {
+/**
+ * Puts `refs` into Claude Code's chat input, starting a new chat when asked to or when no chat is open. Claude Code's
+ * open chat is in an editor tab unless its location setting says sidebar; `inTab` treats it as a tab regardless.
+ */
+async function sendToClaude(refs: Ref[], newChat: boolean, inTab: boolean) {
   const text = refs.map(ref => ref.text).join(' ') + ' ';
   if (newChat) {
     await openClaudeChat(text);
@@ -221,7 +225,7 @@ async function sendToClaude(refs: Ref[], newChat: boolean) {
     await focusClaude();
     return;
   }
-  const inPanel = vscode.workspace.getConfiguration('claudeCode').get('preferredLocation') !== 'sidebar';
+  const inPanel = inTab || vscode.workspace.getConfiguration('claudeCode').get('preferredLocation') !== 'sidebar';
   if (inPanel && !claudeTabs().length && (await openClaudeChat(text))) {
     return;
   }
@@ -621,7 +625,7 @@ class DropStrip implements vscode.TreeDataProvider<DropTarget>, vscode.TreeDragA
     const uris = parseUriList(await data.get('text/uri-list')?.asString());
     // An empty list would make addUris fall back to the active editor.
     if (uris.length) {
-      await addUris(undefined, uris, target?.newChat ?? false, true);
+      await addUris(undefined, uris, target?.newChat ?? false, 'sidebar');
     }
   }
 }
