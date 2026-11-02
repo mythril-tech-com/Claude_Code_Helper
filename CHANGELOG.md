@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- No longer marked as Preview. The extension still relies on Claude Code's internal commands, as [How it works](https://github.com/mythril-tech-com/Claude_Code_Helper#how-it-works) explains, and the references stay on the clipboard if one of them fails.
+
 ## 0.1.1
 
 - Also on [Open VSX](https://open-vsx.org/extension/mythriltech/claude-code-add-to-chat), where Cursor, Antigravity, Windsurf and other editors built on VS Code get their extensions. The README now says so.

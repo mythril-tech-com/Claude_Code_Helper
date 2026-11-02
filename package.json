@@ -2,11 +2,10 @@
   "name": "claude-code-add-to-chat",
   "displayName": "Claude Code - Add to Chat",
   "description": "Right-click files, folders or selected lines to add @-references to Claude Code's chat. Ctrl+L like Cursor.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "mythriltech",
   "license": "MIT",
   "icon": "images/icon.png",
-  "preview": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/mythril-tech-com/Claude_Code_Helper.git"
