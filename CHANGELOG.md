@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Also on [Open VSX](https://open-vsx.org/extension/mythriltech/claude-code-add-to-chat), where Cursor, Antigravity, Windsurf and other editors built on VS Code get their extensions. The README now says so.
+- The README's install example no longer names a specific version.
+
 ## 0.1.0
 
 First Marketplace release. Renamed from **Claude Add to Chat** to **Claude Code - Add to Chat**.

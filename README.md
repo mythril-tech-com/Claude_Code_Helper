@@ -96,7 +96,7 @@ To install a `.vsix` you built yourself:
 2. Click the **...** menu at the top of the view.
 3. Choose **Install from VSIX...** and pick the `.vsix` file.
 
-Or from a terminal: `code --install-extension claude-code-add-to-chat-0.1.0.vsix`
+Or from a terminal: `code --install-extension claude-code-add-to-chat-<version>.vsix`
 
 Installing a newer `.vsix` replaces the old version. Reload the window afterwards.
 
