@@ -46,7 +46,7 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           {
-            echo "Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mythriltech.claude-code-add-to-chat), or download the \`.vsix\` below."
+            echo "Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=mythriltech.claude-code-add-to-chat) or [Open VSX](https://open-vsx.org/extension/mythriltech/claude-code-add-to-chat), or download the \`.vsix\` below."
             echo
             awk -v v="$version" '$0 == "## " v {f=1; next} /^## / {f=0} f' CHANGELOG.md
           } > notes.md

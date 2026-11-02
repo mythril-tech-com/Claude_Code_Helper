@@ -2,7 +2,7 @@
 
 Add file, folder and line references to the Claude Code chat, similar to Cursor's "Add to chat".
 
-Requires the [Claude Code](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) extension.
+Requires the Claude Code extension, from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) or [Open VSX](https://open-vsx.org/extension/Anthropic/claude-code).
 
 ## Usage
 
@@ -87,6 +87,8 @@ npm run package
 Open the Extensions view (`Ctrl+Shift+X`), search for **Claude Code - Add to Chat** and click **Install**.
 
 Or from a terminal: `code --install-extension mythriltech.claude-code-add-to-chat`
+
+Cursor, Antigravity, Windsurf and other editors built on VS Code install extensions from [Open VSX](https://open-vsx.org/extension/mythriltech/claude-code-add-to-chat). Search for **Claude Code - Add to Chat** in their Extensions view the same way.
 
 To install a `.vsix` you built yourself:
 
