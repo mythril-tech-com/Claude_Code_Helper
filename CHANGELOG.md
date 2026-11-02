@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Shorter README. How it works, building and other details moved to [docs/DETAILS.md](https://github.com/mythril-tech-com/Claude_Code_Helper/blob/main/docs/DETAILS.md).
+
 ## 0.1.2
 
 - No longer marked as Preview. The extension still relies on Claude Code's internal commands, as [How it works](https://github.com/mythril-tech-com/Claude_Code_Helper/blob/main/docs/DETAILS.md#how-it-works) explains, and the references stay on the clipboard if one of them fails.
