@@ -6,3 +6,5 @@ tsconfig.json
 *.vsix
 .env
 .gitignore
+.github/**
+NEXT_STEPS.md
